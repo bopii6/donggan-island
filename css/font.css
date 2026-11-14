@@ -1,0 +1,11 @@
+/* 标题字：站酷快乐体（ZCOOL KuaiLe）
+   仅包含本站用到的 659 个汉字，来源 Google Fonts，SIL Open Font License 1.1。
+   缺字会自动回退到系统黑体。 */
+
+@font-face {
+  font-family: "KuaiLe";
+  src: url("../assets/fonts/zcool-kuaile-subset.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}

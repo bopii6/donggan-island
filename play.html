@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>动感岛 · 正在玩</title>
+<meta name="theme-color" content="#10201b">
+<link rel="icon" href="./assets/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="./css/font.css">
+<link rel="stylesheet" href="./css/base.css">
+<link rel="stylesheet" href="./css/game.css">
+</head>
+<body class="game-page">
+
+<video id="cam" playsinline muted autoplay aria-hidden="true"></video>
+<canvas id="scene" aria-label="游戏画面"></canvas>
+
+<header class="hud" id="hud">
+  <div class="hud__left">
+    <a class="icon-btn" id="btn-back" href="./index.html" aria-label="返回首页">
+      <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </a>
+    <div class="hud__title">
+      <b id="hud-name">木头人</b>
+      <span id="hud-tag">抑制控制 · 全身</span>
+    </div>
+  </div>
+
+  <div class="hud__mid">
+    <div class="timer" role="progressbar" aria-label="本局剩余时间">
+      <div class="timer__fill" id="timer-fill"></div>
+    </div>
+    <span class="timer__num" id="timer-num">60</span>
+  </div>
+
+  <div class="hud__right">
+    <div class="score-box">
+      <span class="score-box__num" id="score">0</span>
+      <span class="score-box__unit" id="score-unit">颗星</span>
+    </div>
+    <div class="lives" id="lives" aria-label="剩余机会"></div>
+    <button class="icon-btn" id="btn-sound" aria-label="声音开关" aria-pressed="true">
+      <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M4 9h3l4-3.5v13L7 15H4z" fill="currentColor"/><path class="wave" d="M15 9a4 4 0 010 6M17.5 6.5a7.5 7.5 0 010 11" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+    </button>
+    <button class="icon-btn" id="btn-pause" aria-label="暂停">
+      <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><rect x="7" y="5" width="3.6" height="14" rx="1.2" fill="currentColor"/><rect x="13.4" y="5" width="3.6" height="14" rx="1.2" fill="currentColor"/></svg>
+    </button>
+  </div>
+</header>
+
+<div class="subtitle" id="subtitle" aria-live="polite"></div>
+
+<div class="countdown" id="countdown" aria-hidden="true"><span id="countdown-num">3</span></div>
+
+<div class="overlay" id="overlay">
+
+  <!-- 初次进入 -->
+  <section class="panel" data-panel="intro">
+    <div class="panel__art" id="intro-art"></div>
+    <div class="panel__body">
+      <p class="panel__kicker" id="intro-kicker">第 1 关 · 60 秒</p>
+      <h1 class="panel__title" id="intro-title">木头人</h1>
+      <p class="panel__desc" id="intro-desc">绿灯使劲动，听到「木头人」马上定住。</p>
+      <ul class="howto" id="intro-howto"></ul>
+      <div class="panel__actions">
+        <button class="btn btn--primary btn--lg" id="btn-camera">打开摄像头，开始</button>
+        <button class="btn btn--ghost btn--lg" id="btn-mock">没有摄像头？用鼠标试玩</button>
+      </div>
+      <p class="panel__note">画面只在这台电脑上识别，不上传、不保存。</p>
+    </div>
+  </section>
+
+  <!-- 加载中 -->
+  <section class="panel panel--mini" data-panel="loading">
+    <div class="loader"><i></i><i></i><i></i></div>
+    <p class="panel__desc" id="loading-text">正在准备摄像头和动作识别…</p>
+  </section>
+
+  <!-- 站位检查不在这里，改成下方常驻的 setupbar，避免挡住摄像头画面 -->
+
+  <!-- 暂停 -->
+  <section class="panel panel--mini" data-panel="pause">
+    <h2 class="panel__title panel__title--sm">先歇一会儿</h2>
+    <p class="panel__desc">休息的时候可以喝口水，活动一下手腕和脚踝。</p>
+    <div class="panel__actions">
+      <button class="btn btn--primary" id="btn-resume">继续</button>
+      <button class="btn btn--ghost" id="btn-quit">结束这一局</button>
+    </div>
+  </section>
+
+  <!-- 结算 -->
+  <section class="panel panel--result" data-panel="result">
+    <div class="result__head">
+      <p class="panel__kicker" id="result-kicker">木头人 · 完成</p>
+      <h2 class="panel__title" id="result-title">稳住了！</h2>
+      <div class="stars" id="result-stars" aria-label="星级"></div>
+      <p class="panel__desc" id="result-desc"></p>
+    </div>
+    <div class="result__body">
+      <ul class="metrics" id="result-metrics"></ul>
+      <div class="sensory" id="result-sensory">
+        <h3>这一局练到了</h3>
+        <div class="sensory__rows" id="sensory-rows"></div>
+      </div>
+    </div>
+    <p class="tip" id="result-tip"></p>
+    <div class="panel__actions">
+      <button class="btn btn--primary" id="btn-again">再来一局</button>
+      <a class="btn btn--ghost" id="btn-next" href="./index.html">挑别的游戏</a>
+    </div>
+  </section>
+
+</div>
+
+<div class="setupbar" id="setupbar" hidden>
+  <div class="setupbar__status">
+    <b id="setup-title">站到框里</b>
+    <span id="setup-hint">让头和手都在画面里就行，不用退很远</span>
+    <ul class="setupbar__checks" id="setup-checks">
+      <li data-check="body"><i></i>头和手入镜</li>
+      <li data-check="light"><i></i>光线够亮</li>
+      <li data-check="space"><i></i>左右有空间</li>
+    </ul>
+  </div>
+  <div class="setupbar__actions">
+    <button class="btn btn--ghost btn--sm" id="btn-mock2" hidden>用鼠标试玩</button>
+    <button class="btn btn--primary btn--lg" id="btn-start">开始游戏</button>
+  </div>
+</div>
+
+<div class="rotate-hint" id="rotate-hint">把手机横过来玩更宽敞</div>
+
+<script type="module" src="./js/play.js"></script>
+</body>
+</html>

@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>动感岛 · 用身体玩的感统小游戏</title>
+<meta name="description" content="三个用摄像头玩的儿童体感小游戏：练平衡、协调、节奏和自我控制。打开网页就能玩，不用手柄、不用下载，画面只在本机识别。">
+<meta name="theme-color" content="#f6f3e9">
+<link rel="icon" href="./assets/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="./css/font.css">
+<link rel="stylesheet" href="./css/base.css">
+<link rel="stylesheet" href="./css/home.css">
+</head>
+<body class="home">
+
+<header class="topbar">
+  <div class="wrap topbar__inner">
+    <a class="logo" href="./index.html" aria-label="动感岛首页">
+      <svg class="logo__mark" viewBox="0 0 48 48" aria-hidden="true">
+        <rect x="2" y="2" width="44" height="44" rx="14" fill="#10201b"/>
+        <circle cx="30" cy="15" r="6.5" fill="#f9b233"/>
+        <path d="M4 31c6-5 10 2 15-1s8 2 13-1 6 1 8 3v11H4z" fill="#e2542f"/>
+        <path d="M4 37c5-3 9 2 14 0s8 2 13 0 8 0 10 2v7H4z" fill="#1e6a51"/>
+      </svg>
+      <span>动感岛</span>
+    </a>
+    <nav class="topbar__nav" aria-label="主导航">
+      <a href="#games">三个游戏</a>
+      <a href="#why">为什么有用</a>
+      <a href="#records">训练记录</a>
+      <a class="btn btn--sm btn--ink" href="./check.html">摄像头自检</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+
+  <!-- ============ HERO ============ -->
+  <section class="hero">
+    <div class="wrap hero__grid">
+      <div class="hero__copy reveal">
+        <h1 class="hero__title">身体动起来，<br><em>感觉连起来。</em></h1>
+        <p class="hero__lede">
+          三个用摄像头玩的感统小游戏。孩子站在电脑前跳一跳、挥挥手、定一定，屏幕里的小人跟着动。
+          不用手柄，不用下载，打开网页就开始。
+        </p>
+        <div class="hero__actions">
+          <a class="btn btn--primary btn--lg" href="./play.html?game=freeze">从「木头人」开始</a>
+          <a class="btn btn--ghost btn--lg" href="#games">先看看三个游戏</a>
+        </div>
+        <ul class="hero__facts">
+          <li><b>3–12</b>岁都能玩</li>
+          <li><b>60</b>秒一局</li>
+          <li><b>0</b>上传</li>
+        </ul>
+      </div>
+
+      <div class="hero__stage reveal">
+        <div class="stage-card">
+          <div class="stage-card__screen">
+            <canvas id="hero-canvas" width="960" height="560" aria-hidden="true"></canvas>
+            <div class="stage-card__hud">
+              <span class="mini-chip">木头人 · 抑制控制</span>
+              <span class="mini-timer"><i></i>48s</span>
+            </div>
+            <div class="stage-card__caption">绿灯！动起来</div>
+          </div>
+          <div class="stage-card__foot">
+            <span class="dot dot--live"></span>摄像头画面只在这台电脑上识别
+          </div>
+        </div>
+        <div class="sticker sticker--sun" aria-hidden="true">一局<br>60秒</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ GAMES ============ -->
+  <section class="games" id="games">
+    <div class="wrap">
+      <div class="sec-head">
+        <h2>三个游戏，<br>三种练法</h2>
+        <p>每个游戏都盯着一种感觉通道练：身体怎么控制、眼睛和手怎么配合、两边身体怎么分工。一局 60 秒，刚好是孩子能集中注意的长度。</p>
+      </div>
+
+      <div class="game-grid" id="game-grid"></div>
+    </div>
+  </section>
+
+  <!-- ============ WHY ============ -->
+  <section class="why" id="why">
+    <div class="wrap why__grid">
+      <div class="why__intro">
+        <h2>感统不是<br>「多动一动」</h2>
+        <p>
+          感觉统合说的是大脑把看到、听到、身体感到的信息整合起来，再指挥身体做出合适的反应。
+          孩子坐不住、容易撞到东西、学动作慢，常常不是「不听话」，而是这些信息还没接顺。
+        </p>
+        <p class="why__note">
+          这三个游戏不去「训练」某一根肌肉，而是把三类最基础的感觉放在一起用：
+        </p>
+      </div>
+      <ol class="why__list">
+        <li>
+          <span class="why__tag why__tag--field">前庭觉</span>
+          <h3>身体在哪儿、有没有在动</h3>
+          <p>跳起、落地、左右换重心，让内耳和身体不断对答案。节奏跳跳和木头人都在练这个。</p>
+        </li>
+        <li>
+          <span class="why__tag why__tag--track">本体觉</span>
+          <h3>用了多大力、动到什么位置</h3>
+          <p>抬手切水果、定住不动，都需要知道自己的手和脚现在在哪。水果忍者和木头人里有大量这样的判断。</p>
+        </li>
+        <li>
+          <span class="why__tag why__tag--sun">视觉—动作</span>
+          <h3>眼睛看到，身体马上跟上</h3>
+          <p>追着飞起来的水果挥手，是典型的眼手协调；跳过中线去够另一侧，还能练左右脑的配合。</p>
+        </li>
+      </ol>
+    </div>
+  </section>
+
+  <!-- ============ HOW ============ -->
+  <section class="how">
+    <div class="wrap">
+      <div class="sec-head sec-head--tight">
+        <h2>三步就能开始</h2>
+      </div>
+      <div class="how__steps">
+        <article>
+          <span class="how__num">01</span>
+          <h3>把电脑放好</h3>
+          <p>笔记本放在桌上，摄像头对着空地。孩子站在电脑前 1～2 米，让头和手在画面里就行。</p>
+        </article>
+        <article>
+          <span class="how__num">02</span>
+          <h3>先做一次自检</h3>
+          <p>用 30 秒检查摄像头、光线和站位。通过了再开始，孩子不会因为「识别不到」而扫兴。</p>
+        </article>
+        <article>
+          <span class="how__num">03</span>
+          <h3>挑一个开玩</h3>
+          <p>清出一块空地，铺上垫子或光脚玩。大人在旁边看着，一局 60 秒，玩三局刚好休息。</p>
+        </article>
+      </div>
+      <div class="how__cta">
+        <a class="btn btn--ink" href="./check.html">打开摄像头自检</a>
+        <span>不需要注册，不保存画面。</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ RECORDS ============ -->
+  <section class="records" id="records">
+    <div class="wrap">
+      <div class="records__head">
+        <h2>这一周动了几次</h2>
+        <p>记录只存在这台电脑的浏览器里，换台电脑就看不到，也不会传给任何人。</p>
+      </div>
+      <div class="records__panel" id="records-panel">
+        <div class="records__empty" id="records-empty">
+          <p><b>还没有记录。</b>玩完一局，这里会自动记下局数、星星和每个游戏的次数。</p>
+          <a class="btn btn--sm" href="./play.html?game=freeze">先玩一局</a>
+        </div>
+        <div class="records__stats" id="records-stats" hidden>
+          <div class="stat"><b id="stat-week">0</b><span>本周局数</span></div>
+          <div class="stat"><b id="stat-stars">0</b><span>本周星星</span></div>
+          <div class="stat"><b id="stat-time">0</b><span>运动分钟</span></div>
+          <div class="stat"><b id="stat-fav">—</b><span>最常玩</span></div>
+        </div>
+        <ul class="records__list" id="records-list"></ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ NOTE ============ -->
+  <section class="note">
+    <div class="wrap note__inner">
+      <div>
+        <h2>给家长和老师</h2>
+        <ul class="note__list">
+          <li><b>先热身。</b>强度大的游戏前活动手腕脚踝，地面别滑，旁边留出能摔倒的空间。</li>
+          <li><b>一次一两个人。</b>一个孩子上场，其他孩子当裁判和啦啦队，反而更愿意动。</li>
+          <li><b>不追分。</b>结算页只记录这一局的表现，不排名、不比较，重点看「比上次多定住了几秒」。</li>
+        </ul>
+      </div>
+      <div class="note__badge">
+        <svg viewBox="0 0 64 64" aria-hidden="true">
+          <path d="M32 6l22 8v18c0 14-9 22-22 26C19 54 10 46 10 32V14z" fill="#1e6a51" stroke="#10201b" stroke-width="3"/>
+          <path d="M22 32l7 7 14-15" fill="none" stroke="#f6f3e9" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <p>画面只在本机识别<br>不上传、不留存</p>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="foot">
+  <div class="wrap foot__inner">
+    <span>动感岛 · 用身体玩的感统小游戏</span>
+    <span>本机演示版 · 摄像头画面不离开浏览器</span>
+  </div>
+</footer>
+
+<script type="module" src="./js/home.js"></script>
+</body>
+</html>

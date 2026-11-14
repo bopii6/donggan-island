@@ -1,0 +1,12 @@
+# 本地运行产物
+shots/
+node_modules/
+.tmp/
+*.log
+
+# 开发用的临时脚本和素材
+tools/
+
+# 系统文件
+Thumbs.db
+.DS_Store

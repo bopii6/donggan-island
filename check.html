@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>摄像头自检 · 动感岛</title>
+<meta name="theme-color" content="#10201b">
+<link rel="icon" href="./assets/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="./css/font.css">
+<link rel="stylesheet" href="./css/base.css">
+<link rel="stylesheet" href="./css/home.css">
+<link rel="stylesheet" href="./css/check.css">
+</head>
+<body class="checkpage">
+
+<header class="topbar">
+  <div class="wrap topbar__inner">
+    <a class="logo" href="./index.html">
+      <svg class="logo__mark" viewBox="0 0 48 48" aria-hidden="true">
+        <rect x="2" y="2" width="44" height="44" rx="14" fill="#10201b"/>
+        <circle cx="30" cy="15" r="6.5" fill="#f9b233"/>
+        <path d="M4 31c6-5 10 2 15-1s8 2 13-1 6 1 8 3v11H4z" fill="#e2542f"/>
+        <path d="M4 37c5-3 9 2 14 0s8 2 13 0 8 0 10 2v7H4z" fill="#1e6a51"/>
+      </svg>
+      <span>动感岛</span>
+    </a>
+    <a class="btn btn--sm" href="./index.html">回首页</a>
+  </div>
+</header>
+
+<main class="check__main">
+  <div class="wrap check__grid">
+    <section class="check__stage">
+      <div class="preview">
+        <canvas id="preview" width="960" height="720"></canvas>
+        <div class="preview__hint" id="preview-hint">点下面的按钮，允许使用摄像头</div>
+      </div>
+      <div class="preview__foot">
+        <span class="dot" id="live-dot"></span>
+        <span id="fps">准备中</span>
+      </div>
+    </section>
+
+    <section class="check__panel">
+      <p class="kicker">30 秒自检</p>
+      <h1>先确认摄像头<br>看得见你</h1>
+      <p class="lede">这一步只检查设备和站位，不会保存任何画面。通过后就可以去玩了。</p>
+
+      <ul class="checks checks--big">
+        <li class="check" data-check="body"><span class="check__dot"></span><div><b>头和手都在画面里</b><small id="tip-body">站到电脑前 1～2 米，让头和肩膀进画面</small></div></li>
+        <li class="check" data-check="light"><span class="check__dot"></span><div><b>光线够亮</b><small id="tip-light">面朝窗户或开一盏灯，别背光</small></div></li>
+        <li class="check" data-check="space"><span class="check__dot"></span><div><b>左右有活动空间</b><small id="tip-space">画面两侧留一点空，跳起来不会被切掉</small></div></li>
+      </ul>
+
+      <div class="check__actions">
+        <button class="btn btn--primary" id="btn-enable">打开摄像头</button>
+        <a class="btn btn--ghost" href="./play.html?game=freeze&mode=mouse">用鼠标试玩</a>
+      </div>
+      <p class="check__err" id="err" hidden></p>
+    </section>
+  </div>
+</main>
+
+<footer class="foot">
+  <div class="wrap foot__inner">
+    <span>动感岛 · 用身体玩的感统小游戏</span>
+    <span>识别全部在本机完成</span>
+  </div>
+</footer>
+
+<script type="module" src="./js/check.js"></script>
+</body>
+</html>
