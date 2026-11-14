@@ -132,6 +132,11 @@ function updateChecks(f) {
 
   hint.classList.add("is-hidden");
 
+  // 三项都过了：把“打开摄像头”换成“去挑游戏”
+  const allOk = Object.values(checks).every((c) => c.el.classList.contains("is-ok"));
+  document.getElementById("btn-go").hidden = !allOk;
+  document.getElementById("btn-enable").hidden = allOk || started;
+
   if (!f.ok) {
     hint.classList.remove("is-hidden");
     hint.textContent = "没看到你，站到电脑前 1～2 米，让头和手进画面";

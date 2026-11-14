@@ -1,6 +1,6 @@
 /* 标题字：站酷快乐体（ZCOOL KuaiLe）
-   仅包含本站用到的 659 个汉字，来源 Google Fonts，SIL Open Font License 1.1。
-   缺字会自动回退到系统黑体。 */
+   只包含本站用到的 748 个汉字和常用标点，来源 Google Fonts，SIL Open Font License 1.1。
+   新加文案后如果标题里出现系统黑体的字，说明子集缺字，需要重新生成（见 README「标题字子集」）。 */
 
 @font-face {
   font-family: "KuaiLe";

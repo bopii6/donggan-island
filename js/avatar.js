@@ -234,6 +234,30 @@ export function drawSkeleton(ctx, P, color = "#f9b233") {
   ctx.restore();
 }
 
+/* 开合跳动画：k = 0 站立，1 手脚张开；lift 为离地高度（像素） */
+export function jackPose(cx, feetY, hgt, k, lift = 0) {
+  const P = standingJoints(cx, feetY - lift, hgt);
+  const s = hgt * 0.24;
+  const shoY = P.lSho.y;
+  const armA = lerp(Math.PI * 0.42, -Math.PI * 0.36, k); // 手臂从下垂摆到头顶
+  const arm = hgt * 0.17;
+  for (const side of [-1, 1]) {
+    const sho = side < 0 ? P.lSho : P.rSho;
+    const ex = sho.x + side * Math.cos(armA) * arm;
+    const ey = shoY + Math.sin(armA) * arm;
+    const wx = ex + side * Math.cos(armA - side * 0.0) * arm * 0.95;
+    const wy = ey + Math.sin(armA) * arm * 0.95;
+    const elb = { x: ex, y: ey, v: 1 };
+    const wri = { x: wx, y: wy, v: 1 };
+    if (side < 0) { P.lElb = elb; P.lWri = wri; } else { P.rElb = elb; P.rWri = wri; }
+    const spread = lerp(0.4, 1.25, k) * s;
+    const kne = { x: cx + side * spread * 0.78, y: P.lKne.y, v: 1 };
+    const ank = { x: cx + side * spread, y: feetY - lift, v: 1 };
+    if (side < 0) { P.lKne = kne; P.lAnk = ank; } else { P.rKne = kne; P.rAnk = ank; }
+  }
+  return P;
+}
+
 /* 首页封面上的“定格小人” */
 export function presetPose(w, h, kind = "jump") {
   const cx = w * 0.5;

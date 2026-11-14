@@ -312,7 +312,7 @@ export class PoseTracker {
 
     // 校准：站定后取 1 秒的均值
     if (ok && !this.baseline) {
-      this.calibBuffer.push({ x: hip.x, y: hip.y, s: scale, feet: (pts.lAnk?.y ?? 0 + (pts.rAnk?.y ?? 0)) / 2 });
+      this.calibBuffer.push({ x: hip.x, y: hip.y, s: scale, feet: ((pts.lAnk?.y ?? 0) + (pts.rAnk?.y ?? 0)) / 2 });
       if (this.calibBuffer.length >= 30) {
         const b = this.calibBuffer;
         this.baseline = {
@@ -357,29 +357,41 @@ export class PoseTracker {
       if (m.jump <= 0) { m.jump = 0; m.jumpV = 0; m.jumping = false; }
     }
 
+    // S 键：下蹲
+    const squatTarget = this.keys.has("s") || this.keys.has("arrowdown") ? 1 : 0;
+    m.squat = (m.squat ?? 0) + (squatTarget - (m.squat ?? 0)) * Math.min(1, dt * 10);
+
     const W = this.W, H = this.H;
     const bs = Math.min(W, H) * 0.26;
     const cx = W * 0.5 + m.lean * bs * 0.55;
-    const baseY = H * m.baseY - m.jump * bs * 0.55;
+    const baseY = H * m.baseY - m.jump * bs * 1.0;
+    const sq = m.squat * bs * 0.42;
 
-    const shoY = baseY - bs * 0.95;
-    const hipY = baseY - bs * 0.5;
+    const shoY = baseY - bs * 0.95 + sq;
+    const hipY = baseY - bs * 0.5 + sq;
     const headY = shoY - bs * 0.36;
 
     const breath = Math.sin(m.t * 2.4) * bs * 0.012;
     const sway = Math.sin(m.t * 1.7) * bs * 0.02;
 
-    // 右手跟随鼠标（映射成屏幕坐标）
+    // 右手跟随鼠标（映射成屏幕坐标），手臂长度有上限，不会被拉成面条
+    const reach = bs * 1.25;
+    const rShoX = cx + bs * 0.34;
+    let hx = this.pointer.x * W - rShoX;
+    let hy = this.pointer.y * H - shoY;
+    const hl = Math.hypot(hx, hy);
+    const lim = Math.max(reach, Math.min(W, H) * 0.6);
+    if (hl > lim) { hx *= lim / hl; hy *= lim / hl; }
     const handR = {
-      x: clamp(this.pointer.x * W, 20, W - 20),
-      y: clamp(this.pointer.y * H, 20, H - 20),
+      x: clamp(rShoX + hx, 20, W - 20),
+      y: clamp(shoY + hy, 20, H - 20),
       v: 1,
     };
-    const handL = {
-      x: clamp(cx - bs * 0.75 + (handR.x - (cx - bs * 0.75)) * 0.06, 20, W - 20),
-      y: clamp(shoY + bs * 0.45, 20, H - 20),
-      v: 1,
-    };
+    // 左手默认和右手镜像（方便摆对称动作）；按住 Shift 左手垂下
+    const lShoX = cx - bs * 0.34;
+    const handL = this.keys.has("shift")
+      ? { x: lShoX - bs * 0.12, y: shoY + bs * 0.62, v: 1 }
+      : { x: clamp(lShoX - hx, 20, W - 20), y: clamp(shoY + hy, 20, H - 20), v: 1 };
 
     // 屏幕坐标 → 归一化（镜像）
     const toNorm = (p) => ({ x: 1 - p.x / W, y: p.y / H, v: 1 });
@@ -389,9 +401,9 @@ export class PoseTracker {
       nose: P(cx + sway, headY + breath),
       lSho: P(cx - bs * 0.34, shoY),
       rSho: P(cx + bs * 0.34, shoY),
-      lElb: P((cx - bs * 0.34 + handL.x) / 2, (shoY + handL.y) / 2 + bs * 0.06),
+      lElb: P((lShoX + handL.x) / 2, (shoY + handL.y) / 2),
       lWri: P(handL.x, handL.y),
-      rElb: P((cx + bs * 0.34 + handR.x) / 2, (shoY + handR.y) / 2),
+      rElb: P((rShoX + handR.x) / 2, (shoY + handR.y) / 2),
       rWri: P(handR.x, handR.y),
       lHip: P(cx - bs * 0.22, hipY),
       rHip: P(cx + bs * 0.22, hipY),

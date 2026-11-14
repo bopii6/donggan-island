@@ -3,6 +3,7 @@
 
 import { clamp, lerp, rand, pick, dist, Particles, roundRect, easeOutCubic, easeOutBack } from "../kit.js";
 import { drawAvatar, PALETTES, presetPose, fitScale } from "../avatar.js";
+import { outlineText } from "../kit.js";
 
 const DURATION = 60;
 const G = 1500;
@@ -43,6 +44,8 @@ function blank() {
     lastFrameT: -1,
     flashBomb: 0,
     banner: null,
+    acc: 0.6,
+    frenzy: false,
   };
 }
 
@@ -65,7 +68,7 @@ function spawn(rt, n = 1, forceType = null) {
     ? (sho.y + hip.y * 1.1) / 2
     : H * 0.5;
   for (let i = 0; i < n; i++) {
-    const type = forceType || (Math.random() < 0.09 && S.t > 8 ? "bomb" : pick(["watermelon", "orange", "strawberry", "kiwi", "orange", "watermelon"]));
+    const type = forceType || (Math.random() < 0.09 && S.t > 8 && !S.frenzy ? "bomb" : pick(["watermelon", "orange", "strawberry", "kiwi", "orange", "watermelon"]));
     const k = KINDS[type];
     const side = Math.random() < 0.5 ? -1 : 1;
     const x = W * 0.5 + side * rand(W * 0.26, W * 0.05) + rand(40, -40);
@@ -109,7 +112,9 @@ function slice(rt, f, x, y) {
   }
 
   S.cuts++;
+  S.acc = S.acc * 0.85 + 0.15;
   S.combo++;
+  if (S.combo > 0 && S.combo % 8 === 0) rt.cheer();
   S.bestCombo = Math.max(S.bestCombo, S.combo);
   S.comboT = 2.6;
   const mult = 1 + Math.min(20, S.combo - 1) * 0.1;
@@ -336,6 +341,7 @@ function drawFruitBody(ctx, type, r) {  const k = KINDS[type];
 }
 
 export default {
+  _inspect: () => S, // 调试用：读当前局面
   id: "fruit",
   name: "水果忍者",
   tag: "手眼协调 · 跨中线",
@@ -343,13 +349,18 @@ export default {
   age: "4–12",
   duration: DURATION,
   lives: 3,
+  sense: "视觉—动作",
+  intensity: 2,
+  theme: { color: "#7b61ff", deep: "#4b36c9", bg: ["#d9d1ff", "#1b1233"] },
+  palette: PALETTES.neon,
+  pitch: "挥手切水果，千万别碰炸弹",
   tagline: "挥手切飞起来的水果，连击越高分越多，千万别碰炸弹。",
   howto: [
     "用手当刀：手划过水果就切开了，左右手都行。",
     "连续切中会累积「连击」，倍率越高，一颗水果越值钱。",
-    "黑炸弹不能碰，碰到少一颗心；水果掉下去不算失败，但连击会断。",
+    "黑炸弹不能碰，碰到少一颗心；最后 10 秒下水果雨，抓紧切！",
   ],
-  stars: [1600, 3200],
+  stars: [900, 2400, 4200],
   needsHands: true,
 
   cover(ctx, w, h) {
@@ -408,7 +419,15 @@ export default {
 
     // 难度爬升
     // 难度爬升：一开始慢一点，后面密一点，但始终比之前更容易摸到
-    S.spawnGap = lerp(0.66, 0.38, clamp(S.t / DURATION, 0, 1));
+    S.spawnGap = lerp(0.66, 0.38, clamp(S.t / DURATION, 0, 1)) * lerp(1.35, 0.85, S.acc);
+    // 最后 10 秒：水果雨，没有炸弹，出得又多又快
+    if (!S.frenzy && S.t >= DURATION - 10) {
+      S.frenzy = true;
+      S.banner = { text: "水果雨来啦！", t: 0 };
+      rt.say("水果雨来啦！", { ms: 1600 });
+      rt.audio.sfx("levelup");
+    }
+    if (S.frenzy) S.spawnGap = 0.24;
     if (S.spawnT <= 0) {
       S.spawnT = S.spawnGap * rand(1.1, 0.85);
       const n = S.t > 4 && Math.random() < 0.45 ? 2 : 1;
@@ -474,7 +493,7 @@ export default {
       if (fr.sliced || fr.y - fr.r > rt.H + 80) {
         if (!fr.sliced && fr.type !== "bomb") {
           S.missed++;
-          if (S.combo > 0) S.banner = { text: "连击断了", t: 0, sub: "" };
+          S.acc *= 0.85;
           S.combo = 0;
         }
         S.fruits.splice(i, 1);
@@ -516,6 +535,9 @@ export default {
     const hasCam = rt.camera(0.95, "saturate(0.55) brightness(0.92) contrast(1.02)");
     if (!hasCam) {
       drawBackdrop(ctx, W, H);
+      // 鼠标模式没有真人画面，画个小人当替身
+      const fm = rt.frame;
+      if (fm && fm.ok) drawAvatar(ctx, fm.pts, { palette: PALETTES.neon, alpha: 0.85, inkW: 4 });
     } else {
       // 夜色：只压一点点，保证孩子看得见自己
       const g = ctx.createLinearGradient(0, 0, 0, H);
@@ -701,6 +723,21 @@ export default {
       ctx.restore();
     }
 
+    if (S.banner) {
+      const b = S.banner;
+      const k = Math.min(1, b.t / 0.25);
+      const a = clamp(1 - (b.t - 1.2) / 0.4, 0, 1);
+      outlineText(ctx, b.text, W / 2, H * 0.26, { size: Math.min(72, W * 0.09) * (0.6 + 0.4 * k), fill: "#ffd166", alpha: a });
+    }
+    if (S.frenzy) {
+      ctx.save();
+      ctx.globalAlpha = 0.12 + Math.sin(S.t * 8) * 0.05;
+      ctx.strokeStyle = "#ffd166";
+      ctx.lineWidth = 14;
+      ctx.strokeRect(7, 7, W - 14, H - 14);
+      ctx.restore();
+    }
+
     if (S.flashBomb > 0) {
       ctx.save();
       ctx.globalAlpha = S.flashBomb * 0.35;
@@ -714,10 +751,9 @@ export default {
     const s = S || blank();
     const total = s.cuts + s.missed;
     const acc = total ? Math.round((s.cuts / total) * 100) : 0;
-    const stars = s.score >= 3200 ? 3 : s.score >= 1600 ? 2 : 1;
+    const stars = s.score >= 4200 ? 3 : s.score >= 2400 ? 2 : 1;
     return {
       score: s.score,
-      stars,
       headline: stars === 3 ? "刀光如电！" : stars === 2 ? "切得漂亮！" : "手感来了",
       desc: stars === 3
         ? "切得快、连得多，眼睛和手配合得很好。"

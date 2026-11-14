@@ -42,7 +42,9 @@ function blank() {
 function enterGreen(rt) {
   S.phase = "green";
   S.phaseT = 0;
-  S.phaseDur = rand(6.2, 4.6);
+  // 越往后绿灯越短、节奏越紧
+  const late = clamp(S.t / DURATION, 0, 1);
+  S.phaseDur = rand(lerp(6.2, 4.6, late), lerp(4.6, 3.2, late));
   S.warned = false;
   S.caption = { text: "动起来！", sub: "绿灯亮，使劲动", t: 0 };
   rt.audio.sfx("light");
@@ -52,7 +54,10 @@ function enterGreen(rt) {
 function enterRed(rt) {
   S.phase = "red";
   S.phaseT = 0;
-  S.phaseDur = rand(3.6, 2.6);
+  // 定得好就把红灯拉长一点，练更久的控制
+  const skill = S.freezes ? S.clean / S.freezes : 0;
+  S.phaseDur = rand(3.4, 2.6) + skill * 0.9;
+  S.redCaught = false;
   S.caption = { text: "木头人！", sub: "定住，别动", t: 0 };
   S.caughtT = 0;
   S.curStill = 0;
@@ -186,20 +191,26 @@ function drawBigText(ctx, text, x, y, size) {  ctx.save();
 }
 
 export default {
+  _inspect: () => S, // 调试用：读当前局面
   id: "freeze",
   name: "木头人",
   tag: "抑制控制 · 全身",
-  unit: "颗星",
+  unit: "金币",
   age: "3–10",
   duration: DURATION,
   lives: 3,
+  sense: "本体觉",
+  intensity: 3,
+  theme: { color: "#ff8a4c", deep: "#d9582a", bg: ["#ffd3a8", "#5b3f6e"] },
+  palette: PAL,
+  pitch: "绿灯使劲动，红灯一秒定住",
   tagline: "绿灯使劲动，听到「木头人」马上定住，动一下就被抓到。",
   howto: [
-    "绿灯亮：跳、挥手、扭一扭，动得越多星星越多。",
-    "听到「木头人」：像被按了暂停键，站着别动。",
+    "绿灯亮：跳、挥手、扭一扭，动得越多金币越多。",
+    "听到「木头人」：像被按了暂停键，站着别动，整段定住还有奖励。",
     "被摄像机抓到动，就少一颗心。三颗心用完这局就结束了。",
   ],
-  stars: [80, 135],
+  stars: [30, 85, 145],
 
   cover(ctx, w, h) {
     const g = ctx.createLinearGradient(0, 0, 0, h);
@@ -304,7 +315,16 @@ export default {
       if (S.phaseT >= S.phaseDur) enterRed(rt);
     } else {
       if (S.phaseT >= S.phaseDur) {
-        if (S.cleanThisFreeze) S.clean++;
+        if (S.cleanThisFreeze && !S.redCaught) {
+          S.clean++;
+          // 整个红灯都定住了：奖励 3 个金币
+          S.stars += 3;
+          rt.setScore(S.stars);
+          for (let i = 0; i < 3; i++) addFlyStar(rt);
+          S.stamp = { text: "定住了 +3", t: 0, bad: false };
+          rt.audio.sfx("sparkle");
+          if (S.clean % 2 === 0) rt.cheer();
+        }
         S.cleanThisFreeze = false;
         enterGreen(rt);
       }
@@ -319,7 +339,7 @@ export default {
         S.stars++;
         rt.setScore(S.stars);
         addFlyStar(rt);
-        if (S.stars % 5 === 0) rt.audio.sfx("star");
+        if (S.stars % 5 === 0) rt.audio.sfx("coin");
       }
     }
 
@@ -339,6 +359,7 @@ export default {
       if (S.caughtT > 0.26) {
         S.caughtT = 0;
         S.caught++;
+        S.redCaught = true;
         S.lives--;
         S.curStill = 0;
         rt.setLives(S.lives);
@@ -347,7 +368,7 @@ export default {
         rt.flash("#e2542f", 0.42);
         rt.audio.sfx("fail");
         rt.say("抓到啦！", { alert: true, ms: 1200 });
-        S.stamp = { text: "抓到啦", t: 0, bad: true };
+        S.stamp = { text: "被抓到啦", t: 0, bad: true };
         S.caughtFlash = 1;
         S.parts.burst(rt.W * 0.5, rt.H * 0.45, 16, { color: ["#e2542f", "#ffd166"], life: 0.7, size: 10, power: 1.2 });
         if (S.lives <= 0) {
@@ -408,13 +429,17 @@ export default {
       const r = lerp(16, 9, e);
       ctx.save();
       ctx.translate(x, y);
-      ctx.rotate(p.t * 6);
-      starPath(ctx, 0, 0, r, r * 0.45, 5);
+      ctx.scale(Math.abs(Math.cos(p.t * 9)) * 0.7 + 0.3, 1); // 金币翻转
+      ctx.beginPath();
+      ctx.arc(0, 0, r, 0, Math.PI * 2);
       ctx.fillStyle = "#f9b233";
       ctx.strokeStyle = "#10201b";
       ctx.lineWidth = 2.5;
       ctx.fill();
       ctx.stroke();
+      starPath(ctx, 0, 0, r * 0.55, r * 0.25, 5);
+      ctx.fillStyle = "#fff1b8";
+      ctx.fill();
       ctx.restore();
     }
 
@@ -433,7 +458,7 @@ export default {
       ctx.globalAlpha = clamp(1 - (t - 0.9) / 0.5, 0, 1);
       const bw = 340, bh = 104;
       roundRect(ctx, -bw / 2, -bh / 2, bw, bh, 16);
-      ctx.fillStyle = "#e2542f";
+      ctx.fillStyle = S.stamp.bad ? "#e2542f" : "#2bb36b";
       ctx.fill();
       ctx.strokeStyle = "#10201b";
       ctx.lineWidth = 6;
@@ -442,7 +467,7 @@ export default {
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
       ctx.fillStyle = "#fffaf0";
-      ctx.fillText("被抓到啦", 0, 4);
+      ctx.fillText(S.stamp.text, 0, 4);
       ctx.restore();
     }
 
@@ -629,13 +654,12 @@ export default {
   finish(rt, quit) {
     const s = S || blank();
     const score = s.stars;
-    const stars = score >= 135 ? 3 : score >= 80 ? 2 : 1;
+    const stars = score >= 145 ? 3 : score >= 85 ? 2 : 1;
     const success = s.freezes ? Math.round((s.clean / s.freezes) * 100) : 0;
     const greenRatio = s.greenTime ? clamp(s.greenMotion / s.greenTime, 0, 1) : 0;
     const headline = stars === 3 ? "定得像石头！" : stars === 2 ? "稳住了！" : "动得很开心";
     return {
       score,
-      stars,
       headline,
       desc: stars === 3
         ? "绿灯时火力全开，红灯时一秒定住，控制力非常棒。"
@@ -643,7 +667,7 @@ export default {
           ? "大部分「木头人」都定住了，再快一点点就更厉害。"
           : "已经玩起来了。下一次听到「木头人」，试试先把脚钉在地上。",
       rows: [
-        { label: "攒到的星星", value: `${score} 颗` },
+        { label: "攒到的金币", value: `${score} 个` },
         { label: "定住成功率", value: `${success}%` },
         { label: "最长定住", value: `${s.maxStill.toFixed(1)} 秒` },
         { label: "红灯被抓", value: `${s.caught} 次` },

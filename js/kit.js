@@ -36,6 +36,83 @@ export function starPath(ctx, cx, cy, outer, inner, points = 5, rot = -Math.PI /
   ctx.closePath();
 }
 
+/* 游戏里所有大字统一用它：粗墨边 + 填色，任何背景都看得清 */
+export const DISPLAY_FONT = '"KuaiLe","MiSans","PingFang SC","Microsoft YaHei",sans-serif';
+
+export function outlineText(ctx, text, x, y, {
+  size = 28, fill = "#fffaf0", stroke = "#10201b", weight = 900, align = "center",
+  baseline = "middle", line = 0.22, alpha = 1,
+} = {}) {
+  ctx.save();
+  ctx.globalAlpha *= alpha;
+  ctx.font = `${weight} ${size}px ${DISPLAY_FONT}`;
+  ctx.textAlign = align;
+  ctx.textBaseline = baseline;
+  ctx.lineJoin = "round";
+  ctx.lineWidth = Math.max(3, size * line);
+  ctx.strokeStyle = stroke;
+  ctx.strokeText(text, x, y);
+  ctx.fillStyle = fill;
+  ctx.fillText(text, x, y);
+  ctx.restore();
+}
+
+/* 起跳检测：只看肩膀的上下起伏（按肩宽归一化），所以只露上半身也能判断跳没跳 */
+export class JumpDetector {
+  constructor({ up = 0.13, down = 0.05 } = {}) {
+    this.up = up;
+    this.down = down;
+    this.reset();
+  }
+
+  reset() {
+    this.base = null;
+    this.air = false;
+    this.rise = 0;
+    this.jumps = 0;
+    this.lastTakeoff = -9;
+    this.history = []; // 最近 1.2 秒的 { t, air }
+  }
+
+  update(f, t, dt) {
+    if (!f || !f.ok || !f.shoulder || !f.bodyScale) {
+      this.air = false;
+      this.rise = 0;
+      this.history.push({ t, air: false });
+    } else {
+      const y = f.shoulder.y;
+      const s = f.bodyScale;
+      if (this.base == null) this.base = y;
+      this.rise = (this.base - y) / s;
+      // 落地状态下基线跟着走：往下（蹲、往前走）跟得快，往上跟得慢，起跳那一下来不及被吃掉
+      if (!this.air) {
+        const k = this.rise > 0 ? 0.9 : 5;
+        this.base += (y - this.base) * Math.min(1, dt * k);
+      }
+      if (!this.air && this.rise > this.up) {
+        this.air = true;
+        this.jumps++;
+        this.lastTakeoff = t;
+      } else if (this.air && this.rise < this.down) {
+        this.air = false;
+      }
+      // 卡在空中太久（多半是人往后退了）：重置基线
+      if (this.air && t - this.lastTakeoff > 1.4) {
+        this.air = false;
+        this.base = y;
+      }
+      this.history.push({ t, air: this.air });
+    }
+    while (this.history.length && this.history[0].t < t - 1.2) this.history.shift();
+  }
+
+  /** 在 [t0, t1] 这段时间里有没有离地过 */
+  airborneBetween(t0, t1) {
+    return this.history.some((h) => h.air && h.t >= t0 && h.t <= t1) ||
+      (this.lastTakeoff >= t0 && this.lastTakeoff <= t1);
+  }
+}
+
 /* 剪纸质感的“贴纸描边”：先粗描边，再填色 */
 export function sticker(ctx, draw, fill, ink = "#10201b", lineWidth = 7) {
   ctx.save();
@@ -252,6 +329,41 @@ export class AudioKit {
       case "win":
         [784, 988, 1175, 1568].forEach((f, i) =>
           this.tone({ freq: f, dur: 0.3, type: "triangle", gain: 0.2, when: i * 0.11 }));
+        break;
+      case "bonk": // 锤子敲到地鼠
+        this.tone({ freq: 520, to: 180, dur: 0.12, type: "square", gain: 0.2 });
+        this.noise({ dur: 0.07, gain: 0.22, freq: 1200, q: 1.2 });
+        this.tone({ freq: 1400, to: 1800, dur: 0.08, type: "sine", gain: 0.12, when: 0.05 });
+        break;
+      case "peek": // 地鼠冒头
+        this.tone({ freq: 380, to: 760, dur: 0.1, type: "sine", gain: 0.14 });
+        break;
+      case "ouch": // 拍到刺猬
+        this.tone({ freq: 900, to: 420, dur: 0.22, type: "sawtooth", gain: 0.14 });
+        this.tone({ freq: 600, to: 300, dur: 0.22, type: "square", gain: 0.08, when: 0.04 });
+        break;
+      case "coin":
+        this.tone({ freq: 988, dur: 0.07, type: "square", gain: 0.1 });
+        this.tone({ freq: 1319, dur: 0.16, type: "square", gain: 0.1, when: 0.07 });
+        break;
+      case "whoosh": // 墙飞过来 / 绳子甩过
+        this.noise({ dur: 0.32, gain: 0.16, freq: 700, q: 0.6, type: "bandpass" });
+        break;
+      case "slap": // 绳子拍地
+        this.noise({ dur: 0.06, gain: 0.26, freq: 2600, q: 0.9 });
+        this.tone({ freq: 160, to: 90, dur: 0.07, type: "sine", gain: 0.2 });
+        break;
+      case "pass": // 穿过墙洞
+        [660, 880, 1175].forEach((f, i) =>
+          this.tone({ freq: f, dur: 0.14, type: "triangle", gain: 0.18, when: i * 0.06 }));
+        break;
+      case "crash": // 撞墙
+        this.noise({ dur: 0.4, gain: 0.42, freq: 380, q: 0.5, type: "lowpass" });
+        this.tone({ freq: 180, to: 60, dur: 0.35, type: "square", gain: 0.16 });
+        break;
+      case "levelup":
+        [523, 659, 784, 1047, 1319].forEach((f, i) =>
+          this.tone({ freq: f, dur: 0.16, type: "triangle", gain: 0.16, when: i * 0.06 }));
         break;
     }
   }

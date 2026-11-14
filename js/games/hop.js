@@ -89,6 +89,7 @@ function judge(rt, cue, hitState, dtErr) {
   S.score += Math.round(base * mult);
   rt.setScore(S.score);
   if (perfect) S.perfect++; else S.good++;
+  if (S.combo === 5 || S.combo % 10 === 0) rt.cheer();
   S.errSum += Math.abs(dtErr);
   S.errN++;
   if (cue.type === "left") S.hitsLeft++;
@@ -121,20 +122,26 @@ function missCue(rt, cue) {
 }
 
 export default {
+  _inspect: () => S, // 调试用：读当前局面
   id: "hop",
   name: "节奏跳跳",
   tag: "双侧协调 · 前庭觉",
   unit: "分",
   age: "5–12",
   duration: DURATION,
-  lives: 3,
+  lives: 0,
+  sense: "前庭觉",
+  intensity: 3,
+  theme: { color: "#2bb3d6", deep: "#1a7d99", bg: ["#bfe9f5", "#0d1526"] },
+  palette: PAL,
+  pitch: "跟着鼓点左跳、右跳、往上跳",
   tagline: "踩着鼓点向左、向右、向上跳，越准分越高。",
   howto: [
     "看屏幕上的箭头：向左跳、向右跳，或者原地起跳。",
     "每个指令有两拍的时间，光圈收拢到箭头时正好在位置上，就是「完美」。",
     "连续踩准会累积连击；跳错了不要紧，跟着下一拍继续。",
   ],
-  stars: [2600, 4200],
+  stars: [1000, 2600, 4200],
 
   cover(ctx, w, h) {
     const g = ctx.createLinearGradient(0, 0, 0, h);
@@ -201,8 +208,6 @@ export default {
     S = blank();
     rt.score = 0;
     rt.setScore(0);
-    rt.setLives(3);
-    rt.lives = 3;
     rt.setScore(0);
 
     const f = rt.frame;
@@ -543,7 +548,6 @@ export default {
 
     return {
       score: s.score,
-      stars,
       headline: stars === 3 ? "节奏小达人！" : stars === 2 ? "踩得挺准！" : "动起来就对了",
       desc: stars === 3
         ? "左右和起跳都跟上了鼓点，身体两边配合得很好。"
